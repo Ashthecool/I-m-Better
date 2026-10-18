@@ -87,6 +87,8 @@
 
     enter() { G.audio.setMusic('play'); }
     exit() { G.audio.tension = 0; }
+    // Shows the on-screen pause button on touch devices.
+    canPause() { return this.state === 'play' || this.state === 'talk' || this.state === 'paused'; }
 
     restart() {
       G.run.chapterOutbursts = this.runOutbursts0;
@@ -733,9 +735,10 @@
           ctx.fillStyle = 'rgba(42,38,34,0.08)';
           ctx.fillRect(r.x + 2, r.y + 2, (r.w - 4) * o.cd, r.h - 4);
         }
-        G.ui.keycap(ctx, r.x + 12, r.y + r.h / 2, key, { size: 18 });
-        sk.text(ctx, label, r.x + 52, r.y + 25, { size: 28 });
-        sk.text(ctx, sub, r.x + 52, r.y + 52, { size: 18, color: G.COL.soft });
+        const tx = G.touch ? r.x + 20 : r.x + 52;
+        if (!G.touch) G.ui.keycap(ctx, r.x + 12, r.y + r.h / 2, key, { size: 18 });
+        sk.text(ctx, label, tx, r.y + 25, { size: 28 });
+        sk.text(ctx, sub, tx, r.y + 52, { size: 18, color: G.COL.soft });
         o.icon && o.icon(r.x + r.w - 34, r.y + r.h / 2);
         ctx.restore();
       };
@@ -866,7 +869,7 @@
       const shown = ln.txt.slice(0, Math.floor(T.t * 45));
       sk.para(ctx, shown, P.x + 190, P.y + 86, P.w - 380, { size: 28 });
       if (T.t * 45 >= ln.txt.length) {
-        sk.text(ctx, T.i < T.lines.length - 1 ? 'click ▸' : 'click to go back ▸', P.x + P.w - 200, P.y + P.h - 24,
+        sk.text(ctx, G.ui.t(T.i < T.lines.length - 1 ? 'click ▸' : 'click to go back ▸'), P.x + P.w - 200, P.y + P.h - 24,
           { size: 20, align: 'right', color: G.COL.soft, alpha: 0.6 + 0.4 * Math.sin(G.time * 4) });
       }
       ctx.restore();
@@ -885,7 +888,7 @@
       sk.text(ctx, `${ch.label} · ${ch.title}`, 640, 160, { size: 28, align: 'center', color: G.COL.soft });
       sk.text(ctx, this.day.name, 640, 222, { size: 76, align: 'center' });
       sk.line(ctx, 520, 262, 760, 262, { color: G.COL.red, w: 3 });
-      sk.para(ctx, ch.tips[this.di], 640, 312, 560, { size: 27, align: 'center' });
+      sk.para(ctx, G.ui.t(ch.tips[this.di]), 640, 312, 560, { size: 27, align: 'center' });
 
       const row = (y, items) => {
         let total = 0;
@@ -901,10 +904,15 @@
           x += widths[i] + 26;
         });
       };
-      row(432, [['1 2 3', 'answer'], ['SPACE', 'timing'], ['ARROWS', 'sequences']]);
-      row(474, [['Q', 'hold to breathe'], ['W', ch.breakLabel.toLowerCase()], ['E', 'talk']]);
-      sk.text(ctx, 'Click a thought bubble to let it go.', 640, 512, { size: 21, align: 'center', color: G.COL.soft });
-      sk.text(ctx, 'Click or press Space to begin', 640, 566, { size: 26, align: 'center', color: G.COL.blue, alpha: 0.6 + 0.4 * Math.sin(G.time * 4) });
+      if (G.touch) {
+        sk.text(ctx, 'Tap an answer · tap the task when the marker is in the zone · tap the arrows in order', 640, 432, { size: 21, align: 'center', maxW: 640 });
+        sk.text(ctx, `Hold Breathe · tap ${ch.breakLabel} · tap ${ch.talkLabel}`, 640, 474, { size: 21, align: 'center', maxW: 640 });
+      } else {
+        row(432, [['1 2 3', 'answer'], ['SPACE', 'timing'], ['ARROWS', 'sequences']]);
+        row(474, [['Q', 'hold to breathe'], ['W', ch.breakLabel.toLowerCase()], ['E', 'talk']]);
+      }
+      sk.text(ctx, G.ui.t('Click a thought bubble to let it go.'), 640, 512, { size: 21, align: 'center', color: G.COL.soft });
+      sk.text(ctx, G.touch ? 'Tap to begin' : 'Click or press Space to begin', 640, 566, { size: 26, align: 'center', color: G.COL.blue, alpha: 0.6 + 0.4 * Math.sin(G.time * 4) });
     }
 
     drawSummary(ctx) {

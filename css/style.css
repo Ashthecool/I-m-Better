@@ -11,6 +11,10 @@ html, body {
   background: #1d1b19;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
   touch-action: none;
 }
 
@@ -29,3 +33,59 @@ html, body {
   color: #f3ede2;
   font: 28px 'Patrick Hand', 'Segoe Print', cursive;
 }
+
+/* Reads the phone's notch / rounded-corner insets for core.js. */
+#safe-probe {
+  position: fixed;
+  visibility: hidden;
+  pointer-events: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#touchbar {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#touchbar[hidden], #touchbar button[hidden], #rotate[hidden] { display: none; }
+#touchbar button {
+  width: 42px;
+  height: 42px;
+  padding: 8px;
+  border: 2px solid #2a2622;
+  border-radius: 12px;
+  background: #fffdf7;
+  box-shadow: 2px 3px 0 rgba(0, 0, 0, 0.25);
+}
+#touchbar button:active { background: #fff1cc; transform: translateY(1px); }
+#touchbar svg, #rotate svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #2a2622;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#tb-mute .off, #tb-mute.muted .on { display: none; }
+#tb-mute.muted .off { display: inline; }
+
+#rotate {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #1d1b19;
+  color: #f3ede2;
+  font: 28px 'Patrick Hand', 'Segoe Print', cursive;
+  text-align: center;
+}
+#rotate svg { width: 96px; height: 96px; stroke: #f3ede2; animation: tilt 2.4s ease-in-out infinite; }
+#rotate p { margin: 0 24px; }
+@keyframes tilt { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }

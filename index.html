@@ -2,13 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1d1b19">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="I'm Better!">
   <title>I'm Better!</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <canvas id="game" aria-label="I'm Better! game"></canvas>
   <div id="loading">loading…</div>
+
+  <!-- on-screen buttons for touch devices (shown by core.js) -->
+  <div id="touchbar" hidden>
+    <button id="tb-pause" type="button" aria-label="Pause">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>
+    </button>
+    <button id="tb-mute" type="button" aria-label="Sound">
+      <svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path class="off" d="M16 9l6 6M22 9l-6 6"/></svg>
+    </button>
+    <button id="tb-full" type="button" aria-label="Fullscreen">
+      <svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+    </button>
+  </div>
+
+  <!-- phones held upright -->
+  <div id="rotate" hidden>
+    <svg viewBox="0 0 64 64"><rect x="20" y="8" width="24" height="44" rx="4"/><path d="M10 40a24 24 0 0 0 20 16M10 40l-2 7M10 40l7 1"/></svg>
+    <p>Turn your phone sideways to play</p>
+  </div>
 
   <!-- vendor -->
   <script src="src/vendor/rough.js"></script>

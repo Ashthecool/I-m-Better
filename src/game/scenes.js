@@ -55,7 +55,7 @@
       sk.curve(ctx, [[360, 330], [372, 318], [384, 334], [396, 318], [408, 332]], { color: G.COL.red, w: 2.4 });
 
       this.buttons.forEach((b) => b.draw(ctx));
-      sk.text(ctx, 'M  sound   ·   F  fullscreen   ·   Esc  pause', 640, 690, { size: 20, align: 'center', color: G.COL.soft });
+      if (!G.touch) sk.text(ctx, 'M  sound   ·   F  fullscreen   ·   Esc  pause', 640, 690, { size: 20, align: 'center', color: G.COL.soft });
       const seen = G.save.get('endings', []);
       if (seen.length) sk.text(ctx, `Endings found: ${seen.length}/3`, 1250, 690, { size: 20, align: 'right', color: G.COL.soft });
 
@@ -66,13 +66,18 @@
       ctx.fillRect(0, 0, G.W, G.H);
       sk.round(ctx, 240, 60, 800, 600, 16, { fill: G.COL.sheet, w: 3 });
       sk.text(ctx, 'How to play', 640, 112, { size: 52, align: 'center' });
+      const ch = G.DATA.chapters[0];
       const lines = [
-        ['Do your tasks.', '1 2 3 to answer, SPACE for timing, ARROWS for sequences. Or just click.'],
+        ['Do your tasks.', G.touch
+          ? 'Tap an answer. Tap the task when the marker is in the green zone. Tap the arrows in order.'
+          : '1 2 3 to answer, SPACE for timing, ARROWS for sequences. Or just click.'],
         ['Others get praised.', 'Every time, your jealousy rises. Failing tasks makes it worse.'],
         ['Jealousy changes you.', 'Your eyes drift to them. Thoughts get in the way. Tasks get harder.'],
         ['If the bar fills, you explode.', 'Three outbursts and you\'re out.'],
-        ['Take care of yourself.', 'Hold Q to breathe · W for a short break · E to talk to a friend (once a day). They cost time — the clock keeps going.'],
-        ['Thought bubbles.', 'Click them to let them go.'],
+        ['Take care of yourself.', G.touch
+          ? `Hold Breathe · tap ${ch.breakLabel} for a short break · tap ${ch.talkLabel} to talk to a friend (once a day). They cost time — the clock keeps going.`
+          : 'Hold Q to breathe · W for a short break · E to talk to a friend (once a day). They cost time — the clock keeps going.'],
+        ['Thought bubbles.', G.ui.t('Click them to let them go.')],
       ];
       let y = 170;
       lines.forEach(([h, b]) => {
@@ -80,7 +85,7 @@
         y += 32;
         y += sk.para(ctx, b, 290, y, 700, { size: 23 }) + 12;
       });
-      sk.text(ctx, 'click to close', 640, 630, { size: 22, align: 'center', color: G.COL.soft });
+      sk.text(ctx, G.ui.t('click to close'), 640, 630, { size: 22, align: 'center', color: G.COL.soft });
     }
   }
 

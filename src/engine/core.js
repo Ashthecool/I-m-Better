@@ -90,27 +90,126 @@
     fadeDir = 1;
   };
 
-  G.toggleFullscreen = function () {
+  // ---- phones & tablets ----
+  // G.touch is true on touch-first devices. It switches live if the player
+  // moves between a touchscreen and a mouse (input.js calls G.setTouch).
+  const coarse = window.matchMedia ? window.matchMedia('(hover: none) and (pointer: coarse)') : null;
+  G.touch = !!(coarse && coarse.matches);
+  G.setTouch = function (on) {
+    if (G.touch === on) return;
+    G.touch = on;
+    if (G.canvas) resize();
+  };
+  if (coarse && coarse.addEventListener) coarse.addEventListener('change', (e) => G.setTouch(e.matches));
+  const installed = () =>
+    navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches);
+
+  // "Add to Home Screen" support. Only over http(s): from file:// the browser
+  // can't read the manifest and just logs an error.
+  if (/^https?:$/.test(location.protocol)) {
+    const l = document.createElement('link');
+    l.rel = 'manifest';
+    l.href = 'manifest.webmanifest';
+    document.head.appendChild(l);
+  }
+
+  const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+  G.canFullscreen = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  G.enterFullscreen = function () {
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req) return;
+    const lock = () => {
+      const o = screen.orientation;
+      if (G.touch && o && o.lock) o.lock('landscape').catch(() => {});
+    };
     try {
-      if (document.fullscreenElement) document.exitFullscreen();
-      else document.documentElement.requestFullscreen();
+      const p = req.call(el, { navigationUI: 'hide' });
+      if (p && p.then) p.then(lock, () => {}); else lock();
     } catch (e) { /* not available */ }
   };
+  G.toggleFullscreen = function () {
+    try {
+      if (fsElement()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      else G.enterFullscreen();
+    } catch (e) { /* not available */ }
+  };
+  // The first tap on a phone goes fullscreen (and sideways, where the browser
+  // allows it), so the browser bars don't eat the screen. Only once: if the
+  // player leaves fullscreen, the button on the side brings it back.
+  let autoFsDone = false;
+  G.autoFullscreen = function () {
+    if (autoFsDone || !G.touch) return;
+    autoFsDone = true;
+    if (!fsElement() && !installed()) G.enterFullscreen();
+  };
 
-  G.view = { scale: 1, dpr: 1 };
+  // ---- sizing ----
+  // The game is drawn at 1280x720 and scaled to fit inside the safe area
+  // (clear of notches and rounded corners). On touch devices a strip on the
+  // right holds the pause / sound / fullscreen buttons; on most phones that
+  // strip is in the letterbox space anyway.
+  const BAR = 58, BTN = 42;
+  let probe, touchbar, rotateEl;
+  G.view = { scale: 1, dpr: 1, blocked: false };
+  function insets() {
+    if (!probe) return { t: 0, r: 0, b: 0, l: 0 };
+    const s = getComputedStyle(probe);
+    const n = (v) => parseFloat(v) || 0;
+    return { t: n(s.paddingTop), r: n(s.paddingRight), b: n(s.paddingBottom), l: n(s.paddingLeft) };
+  }
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const ww = window.innerWidth, wh = window.innerHeight;
-    const scale = Math.min(ww / G.W, wh / G.H);
+    const sa = insets();
+    const bar = G.touch ? BAR : 0;
+    const blocked = G.touch && wh > ww; // phone held upright: ask to rotate
+    const aw = ww - sa.l - sa.r, ah = wh - sa.t - sa.b;
+    const scale = Math.max(0.05, Math.min((aw - bar) / G.W, ah / G.H));
     const cw = Math.floor(G.W * scale), ch = Math.floor(G.H * scale);
+    let left = sa.l + (aw - cw) / 2;
+    if (bar) left = Math.min(left, ww - sa.r - bar - cw);
+    left = Math.floor(left);
+    const top = Math.floor(sa.t + (ah - ch) / 2);
     const c = G.canvas;
     c.style.width = cw + 'px';
     c.style.height = ch + 'px';
-    c.style.left = Math.floor((ww - cw) / 2) + 'px';
-    c.style.top = Math.floor((wh - ch) / 2) + 'px';
+    c.style.left = left + 'px';
+    c.style.top = top + 'px';
     c.width = Math.floor(cw * dpr);
     c.height = Math.floor(ch * dpr);
-    G.view = { scale, dpr };
+    G.view = { scale, dpr, blocked };
+
+    if (rotateEl) rotateEl.hidden = !blocked;
+    if (touchbar) {
+      touchbar.hidden = !G.touch || blocked;
+      const space = ww - sa.r - (left + cw);
+      touchbar.style.left = Math.floor(left + cw + (space - BTN) / 2) + 'px';
+      touchbar.style.top = (top + 6) + 'px';
+    }
+  }
+
+  function setupTouchbar() {
+    touchbar = document.getElementById('touchbar');
+    rotateEl = document.getElementById('rotate');
+    if (!touchbar) return;
+    // Keep these taps away from the game's own pointer handling.
+    const stop = (e) => { e.stopPropagation(); if (G.audio) G.audio.unlock(); };
+    touchbar.addEventListener('pointerdown', stop);
+    touchbar.addEventListener('pointerup', stop);
+    const on = (id, fn) => document.getElementById(id).addEventListener('click', (e) => { e.preventDefault(); fn(); });
+    on('tb-pause', () => G.input.tap('Escape'));
+    on('tb-mute', () => G.audio.toggleMute());
+    on('tb-full', () => G.toggleFullscreen());
+    document.getElementById('tb-full').hidden = !G.canFullscreen;
+  }
+  // Called each frame; only touches the DOM when something changed.
+  let tbPause = null, tbMuted = null;
+  function updateTouchbar() {
+    if (!touchbar || touchbar.hidden) return;
+    const canPause = !!(G.scene && G.scene.canPause && G.scene.canPause());
+    if (canPause !== tbPause) document.getElementById('tb-pause').hidden = !(tbPause = canPause);
+    if (G.audio.muted !== tbMuted) document.getElementById('tb-mute').classList.toggle('muted', (tbMuted = G.audio.muted));
   }
 
   let last = 0;
@@ -119,12 +218,18 @@
     let dt = last ? t - last : 0;
     last = t;
     dt = Math.min(dt, 1 / 20);
+    const I = G.input;
+    // Held upright on a phone: the "turn sideways" screen is up and the game waits.
+    if (G.view.blocked) {
+      I.endFrame();
+      requestAnimationFrame(frame);
+      return;
+    }
     G.time += dt;
     G.dt = dt;
     G.sk.tick(G.time);
     G.audio.update(dt);
 
-    const I = G.input;
     if (I.pressed('KeyM')) G.audio.toggleMute();
     if (I.pressed('KeyF')) G.toggleFullscreen();
 
@@ -178,6 +283,7 @@
       ctx.fillRect(0, 0, G.W, G.H);
     }
 
+    updateTouchbar();
     I.endFrame();
     requestAnimationFrame(frame);
   }
@@ -185,7 +291,14 @@
   G.start = function (makeFirstScene) {
     G.canvas = document.getElementById('game');
     G.ctx = G.canvas.getContext('2d');
+    probe = document.createElement('div');
+    probe.id = 'safe-probe';
+    document.body.appendChild(probe);
+    setupTouchbar();
     window.addEventListener('resize', resize);
+    // Phones report the new size a moment after rotating.
+    window.addEventListener('orientationchange', () => { resize(); setTimeout(resize, 350); });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
     resize();
     const fontReady = document.fonts
       ? Promise.race([

@@ -8,6 +8,12 @@ You do your tasks, first at school and later at work. Someone else always gets t
 
 **Browser:** double-click `index.html`. It needs no server, no install and no internet.
 
+**Phone / tablet:** the files need to be on a website, because phones can't open a local `index.html`. GitHub Pages works well: in the repo, go to Settings → Pages, choose "Deploy from a branch", then `main` / root. Open the link on the phone. The game detects a touch screen and adapts on its own:
+- It scales to fit the screen, keeping clear of notches and rounded corners.
+- The first tap goes fullscreen and, on Android, locks the screen sideways. iPhones don't allow web pages to go fullscreen; use Share → Add to Home Screen instead.
+- Holding the phone upright shows a "turn sideways" screen and pauses the game.
+- Pause, sound and fullscreen buttons appear beside the game, and the hints switch from keys to taps.
+
 **Desktop (Steam path):**
 ```
 npm install
@@ -26,7 +32,7 @@ npm run dist       # builds a Windows folder in dist/
 | `W` | short break (16s cooldown) |
 | `E` | talk to a friend (once per day) |
 | click a thought bubble | let it go |
-| `Esc` / `M` / `F` | pause / mute / fullscreen |
+| `Esc` / `M` / `F` | pause / mute / fullscreen (buttons beside the game on touch screens) |
 
 ## Structure
 

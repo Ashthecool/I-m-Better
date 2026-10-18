@@ -5,6 +5,8 @@
   const sk = G.sk, U = G.util;
 
   G.ui = {
+    // Hint text: "click" reads as "tap" on touch devices.
+    t: (s) => (G.touch ? s.replace(/\b([Cc])lick/g, (m, c) => (c === 'C' ? 'Tap' : 'tap')) : s),
     keycap(ctx, x, y, label, o = {}) {
       const size = o.size || 18;
       const w = Math.max(size + 8, sk.measure(ctx, label, size) + 12);

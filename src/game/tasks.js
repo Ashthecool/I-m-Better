@@ -102,10 +102,11 @@
       return [0, 1, 2].map((s) => ({ x: x0 + s * (w + gap), y: P.y + 138, w, h }));
     },
     arrowRects(P) {
-      const w = 54, h = 42, gap = 12;
+      // bigger on touch screens, where these are the only way to answer
+      const [w, h, gap, y] = G.touch ? [100, 60, 18, 192] : [54, 42, 12, 206];
       const x0 = P.x + P.w / 2 - (4 * w + 3 * gap) / 2;
       // display order: left, up, down, right
-      return [3, 0, 2, 1].map((dir, i) => ({ dir, x: x0 + i * (w + gap), y: P.y + 206, w, h }));
+      return [3, 0, 2, 1].map((dir, i) => ({ dir, x: x0 + i * (w + gap), y: P.y + y, w, h }));
     },
 
     update(t, L, dt) {
@@ -187,8 +188,9 @@
           const rr = { x: (t.ax[oi] ?? r.x) + jx(oi), y: r.y + jy(oi), w: r.w, h: r.h };
           const hover = U.inRect(m.x, m.y, rr);
           sk.round(ctx, rr.x, rr.y, rr.w, rr.h, 12, { fill: hover ? '#fff1cc' : '#ffffff', w: 2.2 });
-          G.ui.keycap(ctx, rr.x + 10, rr.y + 20, String(s + 1), { size: 15 });
-          sk.text(ctx, t.options[oi], rr.x + rr.w / 2 + 8, rr.y + rr.h / 2 + 3, { size: 30, align: 'center', maxW: rr.w - 54 });
+          if (!G.touch) G.ui.keycap(ctx, rr.x + 10, rr.y + 20, String(s + 1), { size: 15 });
+          const ox = G.touch ? 0 : 8;
+          sk.text(ctx, t.options[oi], rr.x + rr.w / 2 + ox, rr.y + rr.h / 2 + 3, { size: 30, align: 'center', maxW: rr.w - 54 + ox * 2 });
         });
       } else if (t.kind === 'timing') {
         sk.para(ctx, t.prompt, P.x + P.w / 2, P.y + 92, 700, { size: 30, align: 'center', valign: 'middle' });
@@ -199,8 +201,12 @@
         const mx = bx + bw * t.pos + jx(3) * 0.5;
         sk.line(ctx, mx, by - 14, mx, by + bh + 14, { w: 4, color: G.COL.red });
         sk.poly(ctx, [[mx - 9, by - 22], [mx + 9, by - 22], [mx, by - 10]], { fill: G.COL.red, color: G.COL.red, w: 1.5 });
-        const kw = G.ui.keycap(ctx, P.x + P.w / 2 - 80, P.y + 232, 'SPACE', { size: 16 });
-        sk.text(ctx, 'or click', P.x + P.w / 2 - 80 + kw + 10, P.y + 233, { size: 20, color: G.COL.soft });
+        if (G.touch) {
+          sk.text(ctx, 'tap anywhere here', P.x + P.w / 2, P.y + 233, { size: 22, align: 'center', color: G.COL.soft });
+        } else {
+          const kw = G.ui.keycap(ctx, P.x + P.w / 2 - 80, P.y + 232, 'SPACE', { size: 16 });
+          sk.text(ctx, 'or click', P.x + P.w / 2 - 80 + kw + 10, P.y + 233, { size: 20, color: G.COL.soft });
+        }
       } else if (t.kind === 'seq') {
         sk.text(ctx, t.prompt, P.x + P.w / 2, P.y + 80, { size: 30, align: 'center' });
         const n = t.seq.length, w = 64, gap = 14;

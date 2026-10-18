@@ -1,0 +1,11 @@
+{
+  "name": "I'm Better!",
+  "short_name": "I'm Better!",
+  "description": "A small hand-drawn game about jealousy.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#1d1b19",
+  "theme_color": "#1d1b19"
+}
