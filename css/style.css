@@ -1,0 +1,31 @@
+@font-face {
+  font-family: 'Patrick Hand';
+  src: url('../assets/fonts/PatrickHand.woff2') format('woff2');
+  font-display: block;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #1d1b19;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+#game {
+  position: absolute;
+  display: block;
+  cursor: default;
+}
+
+#loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f3ede2;
+  font: 28px 'Patrick Hand', 'Segoe Print', cursive;
+}
